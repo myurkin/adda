@@ -44,6 +44,7 @@
 
 // defined and initialized in calculator.c
 extern doublecomplex *rvec; // can't be declared restrict due to SwapPointers
+extern doublecomplex *vcur, *vpr, *vtmp, *vzeros, *vnext;
 extern doublecomplex * restrict vec1,* restrict vec2,* restrict vec3,* restrict vec4,* restrict Avecbuffer;
 // defined and initialized in fft.c
 #if !defined(OPENCL) && !defined(SPARSE)
@@ -113,6 +114,7 @@ ITER_FUNC(CGNR);
 ITER_FUNC(CSYM);
 ITER_FUNC(QMR_CS);
 ITER_FUNC(QMR_CS_2);
+ITER_FUNC(Shifted_CG);
 /* TO ADD NEW ITERATIVE SOLVER
  * Add the line to this list in the alphabetical order, analogous to the ones already present. The variable part is the
  * name of the function, implementing the method. The macros expands to a function prototype.
@@ -125,7 +127,8 @@ static const struct iter_params_struct params[]={
 	{IT_CGNR,10,1,0,CGNR},
 	{IT_CSYM,10,6,2,CSYM},
 	{IT_QMR_CS,50000,8,3,QMR_CS},
-	{IT_QMR_CS_2,50000,5,2,QMR_CS_2}
+	{IT_QMR_CS_2,50000,5,2,QMR_CS_2},
+	{IT_SHIFTED_CG,50000,3,3,Shifted_CG}
 	/* TO ADD NEW ITERATIVE SOLVER
 	 * Add its parameters to this list in the alphabetical order. The parameters, in order of appearance, are identifier
 	 * (specified in const.h), maximum allowed number of iterations without the residual decrease, numbers of additional
@@ -139,6 +142,8 @@ static const struct iter_params_struct params[]={
 // matvec.c
 void MatVec(doublecomplex * restrict in,doublecomplex * restrict out,double * inprod,bool her,TIME_TYPE *timing,
 	TIME_TYPE *comm_timing);
+void MatVecRaw(doublecomplex * restrict in, doublecomplex * restrict out, double *inprod, const bool her,
+	TIME_TYPE *timing, TIME_TYPE *comm_timing);
 
 #ifdef OCL_BLAS
 // Test clBLAS version (specific numbers is because we never considered earlier versions)
@@ -1242,6 +1247,88 @@ ITER_FUNC(QMR_CS_2)
 
 //======================================================================================================================
 
+ITER_FUNC(Shifted_CG)
+// Short comment, providing full name of the iterative solver
+{
+// It is recommended to define all nontrivial constants here
+#define EPS1 1E-30
+	// all internal variables should be defined here as static, since the function will be called many times
+	static doublecomplex pn=0; // pseudo norm
+	static doublecomplex norm=0;
+	static doublecomplex alfa1=0;
+	static doublecomplex beta_pr=0;
+	static doublecomplex beta_cur=0;
+	//FILE *fp,*fp2;
+	//FILE *fp3, *fp4, *fp5;
+	//FILE *fp6;
+
+
+	// The function accepts a single argument 'ph' describing a current phase to execute
+	switch (ph) {
+	case PHASE_VARS:
+
+	  return;
+	case PHASE_INIT:
+		// Calculate first basis vector.
+		// Calculate the pseudo norm of the residual (for simplicity, x=0)
+		pn=nDotProdSelf_conj(rvec,&Timing_OneIterComm);
+		pn=csqrt(pn); // complex square root
+		nMult_cmplx(vcur, rvec, 1/pn);
+		//for(size_t i=0;i<local_nRows;i++) vcur[i]=rvec[i]/pn;
+		/*if ((fp2 = fopen("rvec (ADDA).txt", "w")) == NULL) printf("File is not open");
+		for(size_t i=0;i<local_nRows;i++) fprintf(fp2,"%.30f + %.30f*I,\n", creal(rvec[i]), cimag(rvec[i]));
+		fclose(fp2);*/
+		// Calculate the norm of the residual
+		norm=nNorm2(rvec,&Timing_OneIterComm);
+		norm=csqrt(norm);
+		beta_pr=norm;
+		// v0=0
+		nInit(vpr);
+		nInit(vzeros);
+
+
+	  return;
+	case PHASE_ITER:
+		// Lanczos Process
+		MatVecRaw(vcur,Avecbuffer,NULL,false,&Timing_OneIterMVP,&Timing_OneIterMVPComm);
+		/*if ((fp = fopen("Av (ADDA).txt", "w")) == NULL) printf("File is not open");
+		for(size_t i=0;i<local_nRows;i++) fprintf(fp,"%.30f + %.30f*I,\n", creal(Avecbuffer[i]), cimag(Avecbuffer[i]));
+		fclose(fp);*/
+		// alfa1
+		alfa1=nDotProd_conj(vcur, Avecbuffer, &Timing_OneIterComm);
+		/*if ((fp4 = fopen("alfa1 (ADDA).txt", "w")) == NULL) printf("File is not open");
+		fprintf(fp4,"%.30f + %.30f*I,\n", creal(alfa1), cimag(alfa1));
+		fclose(fp4);*/
+		// v=v-alfa1*vcur+A.vcur
+		nIncrem110_cmplx(vtmp, vcur, Avecbuffer, 1, -alfa1);
+		/*if ((fp5 = fopen("v (ADDA).txt", "w")) == NULL) printf("File is not open");
+		for(size_t i=0;i<local_nRows;i++) fprintf(fp5,"%.30f + %.30f*I,\n", creal(vtmp[i]), cimag(vtmp[i]));
+		fclose(fp5);*/
+		// v=v-beta0*vprev
+		nIncrem110_cmplx(vtmp, vpr, vzeros, 1, -beta_pr);
+		/*if ((fp3 = fopen("v (ADDA).txt", "w")) == NULL) printf("File is not open");
+		for(size_t i=0;i<local_nRows;i++) fprintf(fp3,"%.30f + %.30f*I,\n", creal(vtmp[i]), cimag(vtmp[i]));
+		fclose(fp3);*/
+		// beta_cur=|vtmp|ps
+		beta_cur=nDotProdSelf_conj(vtmp,&Timing_OneIterComm);
+		beta_cur=csqrt(beta_cur); // complex square root
+		nMult_cmplx(vnext, vtmp, 1/beta_cur);
+		/*if ((fp6 = fopen("v2 (ADDA).txt", "w")) == NULL) printf("File is not open");
+		for(size_t i=0;i<local_nRows;i++) fprintf(fp6,"%.30f + %.30f*I,\n", creal(vnext[i]), cimag(vnext[i]));
+		fclose(fp6);*/
+		// CG iterates for all shifted systems
+
+
+
+
+	  return;
+	}
+	LogError(ONE_POS,"Unknown phase (%d) of the iterative solver",(int)ph);
+#undef EPS1
+}
+
+//======================================================================================================================
+
 /* TO ADD NEW ITERATIVE SOLVER
  * Add the function implementing the iterative method to the list above in the alphabetical order. The template for the
  * function is provided below together with additional comments. Please also look at the iterative solvers, already
@@ -1515,7 +1602,12 @@ int IterativeSolver(const enum iter method_in,const enum incpol which)
 	tstart=GET_TIME();
 	matvec_ready=false; // can be set to true only in CalcInitField (if !load_chpoint)
 	if (!load_chpoint) {
-		nMult_mat(pvec,Einc,cc_sqrt);
+		if (IterMethod!=IT_SHIFTED_CG) {
+			nMult_mat(pvec,Einc,cc_sqrt);
+		}
+		else {
+			nCopy(pvec,Einc);
+		}
 		temp=nNorm2(pvec,&Timing_InitIterComm); // |r_0|^2 when x_0=0
 		resid_scale=1/temp;
 		epsB=iter_eps*iter_eps*temp;

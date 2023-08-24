@@ -556,7 +556,7 @@ static struct opt_struct options[]={
 		 * !!! If subarguments are added, second-to-last argument should be changed from 1 to UNDEF, and consistency
 		 * test for number of arguments should be implemented in PARSE_FUNC(int_surf) below.
 		 */
-	{PAR(iter),"{bcgs2|bicg|bicgstab|cgnr|csym|qmr|qmr2}","Sets the iterative solver.\n"
+	{PAR(iter),"{bcgs2|bicg|bicgstab|cgnr|csym|qmr|qmr2|scg}","Sets the iterative solver.\n"
 		"Default: qmr",1,NULL},
 		/* TO ADD NEW ITERATIVE SOLVER
 		 * add the short name, used to define the new iterative solver in the command line, to the list "{...}" in the
@@ -1324,6 +1324,7 @@ PARSE_FUNC(iter)
 	else if (strcmp(argv[1],"csym")==0) IterMethod=IT_CSYM;
 	else if (strcmp(argv[1],"qmr")==0) IterMethod=IT_QMR_CS;
 	else if (strcmp(argv[1],"qmr2")==0) IterMethod=IT_QMR_CS_2;
+	else if (strcmp(argv[1],"scg")==0) IterMethod=IT_SHIFTED_CG;
 	/* TO ADD NEW ITERATIVE SOLVER
 	 * add the line to else-if sequence above in the alphabetical order, analogous to the ones already present. The
 	 * variable parts of the line are its name used in command line and its descriptor, defined in const.h
@@ -1356,6 +1357,7 @@ PARSE_FUNC(m)
 		if (ref_index[i]==1) PrintErrorHelp("Given refractive index #%d is that of vacuum, which is not supported. "
 			"Consider using, for instance, 1.0001 instead.",i+1);
 	}
+	if(IterMethod==IT_SHIFTED_CG) num_used_n=Narg/2;
 }
 PARSE_FUNC(maxiter)
 {
@@ -2304,7 +2306,7 @@ void VariablesInterconnect(void)
 		UpdateSymVec(prop);
 		if (beam_asym) UpdateSymVec(beam_center);
 	}
-	ipr_required=(IterMethod==IT_BICGSTAB || IterMethod==IT_CGNR);
+	ipr_required=(IterMethod==IT_BICGSTAB || IterMethod==IT_CGNR || IterMethod==IT_SHIFTED_CG);
 	/* TO ADD NEW ITERATIVE SOLVER
 	 * add the new iterative solver to the above line, if it requires inner product calculation during matrix-vector
 	 * multiplication (i.e. calls MatVec function with non-NULL third argument)
@@ -2631,6 +2633,7 @@ void PrintInfo(void)
 			case IT_CSYM: fprintf(logfile,"CSYM\n"); break;
 			case IT_QMR_CS: fprintf(logfile,"QMR (complex symmetric)\n"); break;
 			case IT_QMR_CS_2: fprintf(logfile,"2-term QMR (complex symmetric)\n"); break;
+			case IT_SHIFTED_CG: fprintf(logfile,"Shifted CG\n"); break;
 		}
 		/* TO ADD NEW ITERATIVE SOLVER
 		 * add a case above in the alphabetical order, analogous to the ones already present. The variable parts of the

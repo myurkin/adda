@@ -67,6 +67,11 @@ doublecomplex * restrict expsX,* restrict expsY,* restrict expsZ; // arrays of e
 #endif
 // used in iterative.c
 doublecomplex *rvec;                 // current residual
+doublecomplex *vcur;				 // current basis vector in the Lanczos Process
+doublecomplex *vpr;					 // previous basis vector in the Lanczos Process
+doublecomplex *vtmp;				 // temporary vector in the Lanczos Process
+doublecomplex *vzeros;
+doublecomplex *vnext;				 // next basis vector in the Lanczos Process
 doublecomplex * restrict Avecbuffer; // used to hold the result of matrix-vector products
 // auxiliary vectors, used in some iterative solvers (with more meaningful names)
 doublecomplex * restrict vec1,* restrict vec2,* restrict vec3,* restrict vec4;
@@ -678,6 +683,14 @@ static double orient_integrand(int beta_i,int gamma_i, double * restrict res)
 
 //======================================================================================================================
 
+doublecomplex ** malloc_func(const size_t rows, const size_t columns)
+{
+	doublecomplex **ptr=(doublecomplex **)malloc(columns*sizeof(doublecomplex *));
+	doublecomplex *p=malloc(rows*columns*sizeof(doublecomplex));
+	for(size_t i=0;i<columns;i++) ptr[i]=&p[i*rows];
+	return ptr;
+}
+
 static void AllocateEverything(void)
 // allocates a lot of arrays and performs memory analysis
 {
@@ -700,6 +713,11 @@ static void AllocateEverything(void)
 		MALLOC_VECTOR(pvec,complex,local_nRows,ALL);
 		MALLOC_VECTOR(Einc,complex,local_nRows,ALL);
 		MALLOC_VECTOR(Avecbuffer,complex,local_nRows,ALL);
+		MALLOC_VECTOR(vcur,complex,local_nRows,ALL);
+		MALLOC_VECTOR(vpr,complex,local_nRows,ALL);
+		MALLOC_VECTOR(vtmp,complex,local_nRows,ALL);
+		MALLOC_VECTOR(vzeros,complex,local_nRows,ALL);
+		MALLOC_VECTOR(vnext,complex,local_nRows,ALL);
 	}
 	memory+=5*tmp;
 #ifdef SPARSE
@@ -743,6 +761,9 @@ static void AllocateEverything(void)
 			}
 			memory+=2*tmp;
 			break;
+		case IT_SHIFTED_CG:
+			rvecArray=malloc_func(local_nRows,num_used_n);
+			v_cur=malloc_func(local_nRows,1);
 	}
 	/* TO ADD NEW ITERATIVE SOLVER
 	 * Add here a case corresponding to the new iterative solver. If the new iterative solver requires any extra vectors
@@ -885,6 +906,11 @@ void FreeEverything(void)
 	Free_cVector(pvec);
 	Free_cVector(Einc);
 	Free_cVector(Avecbuffer);
+	Free_cVector(vcur);
+	Free_cVector(vpr);
+	Free_cVector(vtmp);
+	Free_cVector(vzeros);
+	Free_cVector(vnext);
 	
 	/* The following can be automated to some extent, either using the information from structure array 'params' in
 	 * iterative.c or checking each vector for being NULL. However, it will anyway require manual editing if additional
@@ -911,6 +937,9 @@ void FreeEverything(void)
 			Free_cVector(vec1);
 			Free_cVector(vec2);
 			break;
+		case IT_SHIFTED_CG:
+			free(rvecArray);
+			free(v_cur);
 	}
 	/* TO ADD NEW ITERATIVE SOLVER
 	 * Add here a case corresponding to the new iterative solver. It should free the extra vectors that were allocated

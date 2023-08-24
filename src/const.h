@@ -107,7 +107,7 @@ the compilation may fail or produce wrong results. If you still want to try, ena
 #define BOX_MAX USHRT_MAX
 
 // sizes of some arrays
-#define MAX_NMAT         15   // maximum number of different refractive indices (<256)
+#define MAX_NMAT         100  // maximum number of different refractive indices (<256)
 #define MAX_N_SH_PARMS   25   // maximum number of shape parameters
 #define MAX_N_BEAM_PARMS 10   // maximum number of beam parameters
 
@@ -259,7 +259,8 @@ enum iter { // iterative methods
 	IT_CGNR,     // Conjugate Gradient for Normalized equations minimizing Residual norm
 	IT_CSYM,     // Algorithm CSYM
 	IT_QMR_CS,   // Quasi-minimal residual for Complex-Symmetric matrices
-	IT_QMR_CS_2  // 2-term QMR (better roundoff properties)
+	IT_QMR_CS_2,  // 2-term QMR (better roundoff properties)
+	IT_SHIFTED_CG // Algorithm Shifted CG
 	/* TO ADD NEW ITERATIVE SOLVER
 	 * add an identifier starting with 'IT_' and a descriptive comment to this list in the alphabetical order.
 	 */

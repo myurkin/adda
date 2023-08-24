@@ -97,6 +97,11 @@ extern size_t local_Nsmall;
 extern int local_z0,local_z1,local_z1_coer,local_Nz_unif;
 extern size_t local_Nz,local_x0,local_x1,local_Nx;
 
+// For Shifted CG algorithm:
+doublecomplex **rvecArray;
+doublecomplex *v_cur;
+size_t num_used_n; // number of used refractive indexes
+
 #else // These variables are exclusive to the sparse mode
 
 extern int *position;

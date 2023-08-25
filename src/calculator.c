@@ -764,6 +764,14 @@ static void AllocateEverything(void)
 		case IT_SHIFTED_CG:
 			rvecArray=malloc_func(local_nRows,num_used_n);
 			v_cur=malloc_func(local_nRows,1);
+			MALLOC_VECTOR(lArray,complex,num_used_n,ALL);
+			MALLOC_VECTOR(dArray,complex,num_used_n,ALL);
+			MALLOC_VECTOR(sigmaArray,complex,num_used_n,ALL);
+			for(size_t i=0;i<num_used_n;i++)
+				sigmaArray[i]=(4*PI/3)*(ref_index[i]*ref_index[i]+2)/(ref_index[i]*ref_index[i]-1);
+			MALLOC_VECTOR(uArray,complex,num_used_n,ALL);
+			pArray=malloc_func(local_nRows,num_used_n);
+			xArray=malloc_func(local_nRows,num_used_n);
 	}
 	/* TO ADD NEW ITERATIVE SOLVER
 	 * Add here a case corresponding to the new iterative solver. If the new iterative solver requires any extra vectors
@@ -940,6 +948,12 @@ void FreeEverything(void)
 		case IT_SHIFTED_CG:
 			free(rvecArray);
 			free(v_cur);
+			free(lArray);
+			free(dArray);
+			free(sigmaArray);
+			free(uArray);
+			free(pArray);
+			free(xArray);
 	}
 	/* TO ADD NEW ITERATIVE SOLVER
 	 * Add here a case corresponding to the new iterative solver. It should free the extra vectors that were allocated

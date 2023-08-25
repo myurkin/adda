@@ -99,6 +99,12 @@ extern size_t local_Nz,local_x0,local_x1,local_Nx;
 
 // For Shifted CG algorithm:
 doublecomplex **rvecArray;
+doublecomplex *lArray;
+doublecomplex *dArray;
+doublecomplex *sigmaArray;
+doublecomplex *uArray;
+doublecomplex **pArray;
+doublecomplex **xArray;
 doublecomplex *v_cur;
 size_t num_used_n; // number of used refractive indexes
 

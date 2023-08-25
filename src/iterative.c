@@ -1261,14 +1261,6 @@ ITER_FUNC(Shifted_CG)
 	static doublecomplex beta_cur=0;
 	static doublecomplex res=0;
 
-	FILE *fp,*fp2, *fp3, *fp5;
-	//FILE *fp3, *fp4, *fp5;
-	FILE *fp6;
-	FILE *fp7;
-	//FILE *fp8;
-	FILE *fp9;
-
-
 	// The function accepts a single argument 'ph' describing a current phase to execute
 	switch (ph) {
 	case PHASE_VARS:
@@ -1280,10 +1272,6 @@ ITER_FUNC(Shifted_CG)
 		pn=nDotProdSelf_conj(rvec,&Timing_OneIterComm);
 		pn=csqrt(pn); // complex square root
 		nMult_cmplx(vcur, rvec, 1/pn);
-		//for(size_t i=0;i<local_nRows;i++) vcur[i]=rvec[i]/pn;
-		/*if ((fp2 = fopen("rvec (ADDA).txt", "w")) == NULL) printf("File is not open");
-		for(size_t i=0;i<local_nRows;i++) fprintf(fp2,"%.30f + %.30f*I,\n", creal(rvec[i]), cimag(rvec[i]));
-		fclose(fp2);*/
 		beta_pr=pn;
 		// v0=0
 		nInit(vpr);
@@ -1298,80 +1286,38 @@ ITER_FUNC(Shifted_CG)
 		norm=nNorm2(rvec,&Timing_OneIterComm);
 		norm=csqrt(norm);
 
-
 	  return;
 	case PHASE_ITER:
 		// Lanczos Process
 		MatVecRaw(vcur,Avecbuffer,NULL,false,&Timing_OneIterMVP,&Timing_OneIterMVPComm);
-		if ((fp = fopen("Av (ADDA).txt", "w")) == NULL) printf("File is not open");
-		for(size_t i=0;i<local_nRows;i++) fprintf(fp,"%.30f + %.30f*I,\n", creal(Avecbuffer[i]), cimag(Avecbuffer[i]));
-		fclose(fp);
 		// alfa1
 		alfa1=nDotProd_conj(vcur, Avecbuffer, &Timing_OneIterComm);
-		/*if ((fp4 = fopen("alfa1 (ADDA).txt", "w")) == NULL) printf("File is not open");
-		fprintf(fp4,"%.30f + %.30f*I,\n", creal(alfa1), cimag(alfa1));
-		fclose(fp4);*/
 		// v=v-alfa1*vcur+A.vcur
 		nIncrem110_cmplx(vtmp, vcur, Avecbuffer, 0, -alfa1);
-		if ((fp5 = fopen("vtmp1 (ADDA).txt", "w")) == NULL) printf("File is not open");
-		for(size_t i=0;i<local_nRows;i++) fprintf(fp5,"%.30f + %.30f*I,\n", creal(vtmp[i]), cimag(vtmp[i]));
-		fclose(fp5);
 		// v=v-beta0*vprev
 		nIncrem110_cmplx(vtmp, vpr, vzeros, 1, -beta_pr);
-		if ((fp3 = fopen("vtmp2 (ADDA).txt", "w")) == NULL) printf("File is not open");
-		for(size_t i=0;i<local_nRows;i++) fprintf(fp3,"%.30f + %.30f*I,\n", creal(vtmp[i]), cimag(vtmp[i]));
-		fclose(fp3);
 		// beta_cur=|vtmp|ps
 		beta_cur=nDotProdSelf_conj(vtmp,&Timing_OneIterComm);
 		beta_cur=csqrt(beta_cur); // complex square root
 		nMult_cmplx(vnext, vtmp, 1/beta_cur);
-		if ((fp2 = fopen("vnext (ADDA).txt", "w")) == NULL) printf("File is not open");
-		for(size_t i=0;i<local_nRows;i++) fprintf(fp2,"%.30f + %.30f*I,\n", creal(vnext[i]), cimag(vnext[i]));
-		fclose(fp2);
-		/*if ((fp6 = fopen("v2 (ADDA).txt", "w")) == NULL) printf("File is not open");
-		for(size_t i=0;i<local_nRows;i++) fprintf(fp6,"%.30f + %.30f*I,\n", creal(vnext[i]), cimag(vnext[i]));
-		fclose(fp6);*/
 		// norm of vcur
 		vnorm=nNorm2(vcur,&Timing_OneIterComm);
 		vnorm=csqrt(vnorm);
 
 		// CG iterates for all shifted systems
-		if ((fp7 = fopen("log (ADDA).txt", "a+")) == NULL) printf("File is not open");
-		fprintf(fp7,"Number of used refractive indices: %d\n", num_used_n);
 		for(size_t i=0;i<num_used_n;i++) {
-			fprintf(fp7,"Index: %lld\n", i);
 			if(niter!=1) lArray[i]=beta_pr/dArray[i];
 			dArray[i]=alfa1+sigmaArray[i]-beta_pr*lArray[i];
-			fprintf(fp7,"alfa1 = %.30f + %.30f*I,\n", creal(alfa1), cimag(alfa1));
-			fprintf(fp7,"sigmaArray[i] = %.30f + %.30f*I,\n", creal(sigmaArray[i]), cimag(sigmaArray[i]));
-			fprintf(fp7,"beta_pr = %.30f + %.30f*I,\n", creal(beta_pr), cimag(beta_pr));
-			fprintf(fp7,"dArray[i] = %.30f + %.30f*I,\n", creal(dArray[i]), cimag(dArray[i]));
-			fprintf(fp7,"lArray[i] = %.30f + %.30f*I,\n", creal(lArray[i]), cimag(lArray[i]));
 			if(niter==1) uArray[i]=beta_pr-lArray[i]*uArray[i];
 			else uArray[i]=-lArray[i]*uArray[i];
-			fprintf(fp7,"uArray[i] = %.30f + %.30f*I,\n", creal(uArray[i]), cimag(uArray[i]));
-			fprintf(fp7,"beta_pr = %.30f + %.30f*I,\n", creal(beta_pr), cimag(beta_pr));
 			// pArray[i]=vcur-lArray[i]*pArray[i]
 			nIncrem110_cmplx(pArray[i],vzeros,vcur,-lArray[i],1);
-			/*if ((fp8 = fopen("p (ADDA).txt", "w")) == NULL) printf("File is not open");
-			for(size_t j=0;j<local_nRows;j++)
-				fprintf(fp8,"%.30f + %.30f*I,\n", creal(pArray[i][j]), cimag(pArray[i][j]));
-			fclose(fp8);*/
 			// xArray[i]=xArray[i]+u[i]/d[i]*p[i]
 			nIncrem011_cmplx(xArray[i],pArray[i],vzeros,uArray[i]/dArray[i],1);
-			/*if ((fp9 = fopen("x (ADDA).txt", "w")) == NULL) printf("File is not open");
-			for(size_t j=0;j<local_nRows;j++)
-				fprintf(fp9,"%.30f + %.30f*I,\n", creal(xArray[i][j]), cimag(xArray[i][j]));
-			fclose(fp9);*/
 			//current residual
 			res=vnorm*cabs(uArray[i])/norm;
-			fprintf(fp7,"res = %.30f + %.30f*I,\n", creal(res), cimag(res));
-			fprintf(fp7,"vnorm = %.30f + %.30f*I,\n", creal(vnorm), cimag(vnorm));
-			fprintf(fp7,"cabs(ucurArray[i]) = %.30f + %.30f*I,\n", creal(cabs(uArray[i])), cimag(cabs(uArray[i])));
-			fprintf(fp7,"norm = %.30f + %.30f*I,\n", creal(norm), cimag(norm));
-			inprodRp1=conj(res)*res;
 		}
-		fclose(fp7);
+		inprodRp1=conj(res)*res;
 		// vpr=vcur, vcur=vnext, beta_pr=beta_cur
 		nCopy(vpr,vcur);
 		nCopy(vcur,vnext);

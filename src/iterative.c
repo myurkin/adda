@@ -1254,7 +1254,7 @@ ITER_FUNC(Shifted_CG)
 #define EPS1 1E-30
 	// all internal variables should be defined here as static, since the function will be called many times
 	static doublecomplex pn=0; // pseudo norm
-	static doublecomplex norm=0;
+	//static doublecomplex norm=0;
 	static doublecomplex vnorm=0;
 	static doublecomplex alfa1=0;
 	static doublecomplex beta_pr=0;
@@ -1283,8 +1283,8 @@ ITER_FUNC(Shifted_CG)
 			nInit(xArray[i]);
 		}
 		// Calculate norm of b
-		norm=nNorm2(rvec,&Timing_OneIterComm);
-		norm=csqrt(norm);
+		//norm=nNorm2(rvec,&Timing_OneIterComm);
+		//norm=csqrt(norm);
 
 	  return;
 	case PHASE_ITER:
@@ -1315,9 +1315,9 @@ ITER_FUNC(Shifted_CG)
 			// xArray[i]=xArray[i]+u[i]/d[i]*p[i]
 			nIncrem011_cmplx(xArray[i],pArray[i],vzeros,uArray[i]/dArray[i],1);
 			//current residual
-			res=vnorm*cabs(uArray[i])/norm;
+			res=vnorm*cabs(uArray[i]); // without normalization
 		}
-		inprodRp1=conj(res)*res;
+		inprodRp1=conj(res)*res; // outputs are only for the highest refractive index
 		// vpr=vcur, vcur=vnext, beta_pr=beta_cur
 		nCopy(vpr,vcur);
 		nCopy(vcur,vnext);
@@ -1604,12 +1604,8 @@ int IterativeSolver(const enum iter method_in,const enum incpol which)
 	tstart=GET_TIME();
 	matvec_ready=false; // can be set to true only in CalcInitField (if !load_chpoint)
 	if (!load_chpoint) {
-		if (IterMethod!=IT_SHIFTED_CG) {
-			nMult_mat(pvec,Einc,cc_sqrt);
-		}
-		else {
-			nCopy(pvec,Einc);
-		}
+		if (IterMethod!=IT_SHIFTED_CG) nMult_mat(pvec,Einc,cc_sqrt);
+		else nCopy(pvec,Einc);
 		temp=nNorm2(pvec,&Timing_InitIterComm); // |r_0|^2 when x_0=0
 		resid_scale=1/temp;
 		epsB=iter_eps*iter_eps*temp;
@@ -1702,6 +1698,12 @@ int IterativeSolver(const enum iter method_in,const enum incpol which)
 		else if (counter>params[ind_m].mc) LogError(ONE_POS,"Residual norm haven't decreased for maximum allowed "
 			"number of iterations (%d)",params[ind_m].mc);
 	}
+	if (IterMethod==IT_SHIFTED_CG){
+		nCopy(xvec,xArray[num_used_n-1]);
+		//If we use recalc_resid then we have to calculate rvec here,
+		// and explicitly multiply a matrix by a vector (A.x), because in the SCG, res is a number.
+	}
+
 	if (recalc_resid) { // compute and print final residual norm
 		inprodR=ResidualNorm2(xvec,rvec,Avecbuffer,&Timing_MVP,&Timing_MVPComm,&Timing_IntFieldOneComm);
 		if (IFROOT) {
@@ -1717,7 +1719,9 @@ int IterativeSolver(const enum iter method_in,const enum incpol which)
 	/* x is a solution of a modified system, not exactly internal field; should not be used further except for adaptive
 	 * technique (as starting vector for next system)
 	 */
-	nMult_mat(pvec,xvec,cc_sqrt); // p now contains polarizations. Can be used to calculate e.g. scattered field faster.
+	if (IterMethod!=IT_SHIFTED_CG)
+		nMult_mat(pvec,xvec,cc_sqrt); // p now contains polarizations. Can be used to calculate e.g. scattered field faster.
+	else nCopy(pvec,xvec);
 	if (chp_exit) return CHP_EXIT; // check if exiting after checkpoint
 	return (niter-1); // the number of iterations elapsed
 }

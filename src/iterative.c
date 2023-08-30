@@ -1700,7 +1700,7 @@ int IterativeSolver(const enum iter method_in,const enum incpol which)
 	}
 	if (IterMethod==IT_SHIFTED_CG){
 		nCopy(xvec,xArray[num_used_n-1]);
-		//If we use recalc_resid then we have to calculate rvec here,
+		// TODO: If we use recalc_resid then we have to calculate rvec here,
 		// and explicitly multiply a matrix by a vector (A.x), because in the SCG, res is a number.
 	}
 

@@ -874,17 +874,52 @@ int CalculateE(const enum incpol which,const enum Eftype type)
 	// return if checkpoint (normal) occurred
 	if (exit_status==CHP_EXIT) return CHP_EXIT;
 
-	if (yzplane) CalcEplaneYZ(which,type);     // generally plane of incPolY and prop
-	if (scat_plane) CalcScatPlane(which,type); // the scattering plane through ez,prop,incPolX - xz by default
-	// Calculate the scattered field for the whole solid-angle
-	if (all_dir) CalcAlldir();
-	// Calculate the scattered field on the given grid of angles
-	if (scat_grid) CalcScatGrid(which);
-	// Calculate integral scattering quantities (cross sections, asymmetry parameter, electric forces)
-	if (calc_Cext || calc_Cabs || calc_Csca || calc_asym || calc_mat_force) CalcIntegralScatQuantities(which);
-	// saves internal fields and/or dipole polarizations to text file
-	if (store_int_field) StoreIntFields(which);
-	if (store_dip_pol) StoreFields(which,pvec,NULL,F_DIPPOL,F_DIPPOL_TMP,"P","Dipole polarizations");
+	if (IterMethod!=IT_SHIFTED_CG) {
+		if (yzplane) CalcEplaneYZ(which,type);     // generally plane of incPolY and prop
+		if (scat_plane) CalcScatPlane(which,type); // the scattering plane through ez,prop,incPolX - xz by default
+		// Calculate the scattered field for the whole solid-angle
+		if (all_dir) CalcAlldir();
+		// Calculate the scattered field on the given grid of angles
+		if (scat_grid) CalcScatGrid(which);
+		// Calculate integral scattering quantities (cross sections, asymmetry parameter, electric forces)
+		if (calc_Cext || calc_Cabs || calc_Csca || calc_asym || calc_mat_force) CalcIntegralScatQuantities(which);
+		// saves internal fields and/or dipole polarizations to text file
+		if (store_int_field) StoreIntFields(which);
+		if (store_dip_pol) StoreFields(which,pvec,NULL,F_DIPPOL,F_DIPPOL_TMP,"P","Dipole polarizations");
+	} else {
+		char directoryOld[MAX_DIRNAME]="";
+		strcpy(directoryOld, directory); // copy old directory
+		for(size_t i=0;i<num_used_n;i++) {
+			static char dir_m[10]="";
+			sprintf (dir_m, "/m%.10g %.10g", creal(ref_index[i]), cimag(ref_index[i]));
+			strcpy(directoriesNew[i],directory);
+			strcat(directoriesNew[i],dir_m);
+			MkDirErr(directoriesNew[i],ONE_POS);
+			directory=directoriesNew[i]; // change the folder
+			// copy polarization to pvec for each refractive index
+			nCopy(pvec,xArray[i]);
+			if (yzplane) CalcEplaneYZ(which,type);     // generally plane of incPolY and prop
+			if (scat_plane) CalcScatPlane(which,type); // the scattering plane through ez,prop,incPolX - xz by default
+			// Calculate the scattered field for the whole solid-angle
+			if (all_dir) CalcAlldir();
+			// Calculate the scattered field on the given grid of angles
+			if (scat_grid) CalcScatGrid(which);
+			// Calculate integral scattering quantities (cross sections, asymmetry parameter, electric forces)
+			if (calc_Cext || calc_Cabs || calc_Csca || calc_asym || calc_mat_force) CalcIntegralScatQuantities(which);
+			// saves internal fields and/or dipole polarizations to text file
+			if (store_int_field) {
+				// copy polarization to xvec for each refractive index
+				// TODO: polarization->electric field
+				nCopy(xvec,xArray[i]);
+				StoreIntFields(which);
+			}
+			if (store_dip_pol) StoreFields(which,pvec,NULL,F_DIPPOL,F_DIPPOL_TMP,"P","Dipole polarizations");
+			directory=directoryOld; // back to the original folder
+		}
+	}
+
+
+
 	return 0;
 }
 

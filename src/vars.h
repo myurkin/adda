@@ -51,6 +51,7 @@ extern double prop_0[3],prop[3],incPolX[3],incPolY[3],beam_center_0[3],beam_cent
 
 // file info
 extern const char * restrict directory;
+extern char directoriesNew[MAX_NMAT][MAX_DIRNAME];
 extern FILE * restrict logfile;
 extern int term_width;
 

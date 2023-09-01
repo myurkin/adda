@@ -36,7 +36,7 @@
 // defined and initialized in calculator.c
 extern doublecomplex * restrict E_ad;
 extern double * restrict E2_alldir;
-extern const doublecomplex cc[][3];
+extern doublecomplex (*cc)[3];
 #ifndef SPARSE
 extern doublecomplex * restrict expsX,* restrict expsY,* restrict expsZ;
 #endif

@@ -61,7 +61,8 @@ double * restrict muel_alpha; // mueller matrix for different values of alpha
 // used in crosssec.c
 doublecomplex * restrict E_ad; // complex field E, calculated for alldir
 double * restrict E2_alldir; // square of E (scaled with msub, so ~ Poynting vector or dC/dOmega), calculated for alldir
-doublecomplex cc[MAX_NMAT][3]; // couple constants
+doublecomplex (*cc)[3]; // a pointer to array of 3 doubles
+doublecomplex ccArr[MAX_NMAT][MAX_NMAT][3]; // couple constants
 #ifndef SPARSE
 doublecomplex * restrict expsX,* restrict expsY,* restrict expsZ; // arrays of exponents along 3 axes (for calc_field)
 #endif
@@ -592,7 +593,6 @@ static void InitCC(const enum incpol which)
 {
 	int i,j;
 	doublecomplex m;
-
 	for(i=0;i<Nmat;i++) {
 		CoupleConstant(ref_index+Ncomp*i,which,cc[i]);
 		for(j=0;j<3;j++) cc_sqrt[i][j]=csqrt(cc[i][j]);
@@ -630,7 +630,22 @@ static void calculate_one_orientation(double * restrict res)
 		PRINTFB("\nhere we go, calc Y\n\n");
 		if (!orient_avg) fprintf(logfile,"\nhere we go, calc Y\n\n");
 	}
-	InitCC(INCPOL_Y);
+	if (IterMethod!=IT_SHIFTED_CG) {
+		cc=ccArr[0]; // this code may be elsewhere before
+		cc_sqrt=cc_sqrtArr[0];
+		chi_inv=chi_invArr[0];
+		InitCC(INCPOL_Y);
+	}
+	else {
+		for(size_t i=0;i<num_used_n;i++) {
+			cc=ccArr[i];
+			cc_sqrt=cc_sqrtArr[i];
+			chi_inv=chi_invArr[i];
+			ref_index=ref_indexArr[i];
+			InitCC(INCPOL_Y);
+		}
+	}
+
 	// symR implies that prop is along z (in particle RF). Then it is fine for both definitions of scattering angles
 	if (symR && !scat_grid) {
 		if (CalculateE(INCPOL_Y,CE_PARPER)==CHP_EXIT) return;

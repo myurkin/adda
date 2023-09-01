@@ -1350,14 +1350,27 @@ PARSE_FUNC(m)
 	Nmat=Nmat_given=Narg/2;
 	if (Nmat>MAX_NMAT) PrintErrorHelp("Too many materials (%d), maximum %d are supported. You may increase parameter "
 		"MAX_NMAT in const.h and recompile.",Nmat,MAX_NMAT);
-	for (i=0;i<Nmat;i++) {
-		ScanDoubleError(argv[2*i+1],&mre);
-		ScanDoubleError(argv[2*i+2],&mim);
-		ref_index[i] = mre + I*mim;
-		if (ref_index[i]==1) PrintErrorHelp("Given refractive index #%d is that of vacuum, which is not supported. "
-			"Consider using, for instance, 1.0001 instead.",i+1);
+	if(IterMethod!=IT_SHIFTED_CG) {
+		ref_index=ref_indexArr[0];
+		for (i=0;i<Nmat;i++) {
+			ScanDoubleError(argv[2*i+1],&mre);
+			ScanDoubleError(argv[2*i+2],&mim);
+			ref_index[i] = mre + I*mim;
+			if (ref_index[i]==1) PrintErrorHelp("Given refractive index #%d is that of vacuum, which is not supported. "
+				"Consider using, for instance, 1.0001 instead.",i+1);
+		}
 	}
-	if(IterMethod==IT_SHIFTED_CG) num_used_n=Narg/2;
+	else {
+		num_used_n=Nmat;
+		for(i=0;i<num_used_n;i++) {
+			ref_index=ref_indexArr[i];
+			ScanDoubleError(argv[2*i+1],&mre);
+			ScanDoubleError(argv[2*i+2],&mim);
+			ref_index[0] = mre + I*mim;
+			if (ref_index[i]==1) PrintErrorHelp("Given refractive index #%d is that of vacuum, which is not supported. "
+				"Consider using, for instance, 1.0001 instead.",i+1);
+		}
+	}
 }
 PARSE_FUNC(maxiter)
 {
@@ -1963,6 +1976,7 @@ void InitVariables(void)
 	vInit(beam_center_0);
 	// initialize ref_index of scatterer
 	Nmat=Nmat_given=1;
+	ref_index=ref_indexArr[0];
 	ref_index[0]=1.5;
 	// initialize to null to determine further whether it is initialized
 	logfile=NULL;

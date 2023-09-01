@@ -52,6 +52,12 @@ extern const int phi_int_type;
 // defined and initialized in timing.c
 extern TIME_TYPE Timing_EPlane,Timing_EPlaneComm,Timing_IntField,Timing_IntFieldOne,Timing_ScatQuan,Timing_IncBeam;
 extern size_t TotalEFieldPlane;
+extern doublecomplex (*cc)[3]; // a pointer to array of 3 doubles
+extern doublecomplex ccArr[MAX_NMAT][MAX_NMAT][3]; // couple constants
+extern doublecomplex (*cc_sqrt)[3];
+extern doublecomplex cc_sqrtArr[MAX_NMAT][MAX_NMAT][3];
+extern doublecomplex (*chi_inv)[3];
+extern doublecomplex chi_invArr[MAX_NMAT][MAX_NMAT][3];
 
 // LOCAL VARIABLES
 
@@ -891,13 +897,14 @@ int CalculateE(const enum incpol which,const enum Eftype type)
 		strcpy(directoryOld, directory); // copy old directory
 		for(size_t i=0;i<num_used_n;i++) {
 			static char dir_m[10]="";
-			sprintf (dir_m, "/m%.10g %.10g", creal(ref_index[i]), cimag(ref_index[i]));
+			ref_index=ref_indexArr[i];
+			sprintf (dir_m, "/m%.10g %.10g", creal(ref_index[0]), cimag(ref_index[0]));
 			strcpy(directoriesNew[i],directory);
 			strcat(directoriesNew[i],dir_m);
 			MkDirErr(directoriesNew[i],ONE_POS);
 			directory=directoriesNew[i]; // change the folder
-			// copy polarization to pvec for each refractive index
-			nCopy(pvec,xArray[i]);
+			nCopy(pvec,xArray[i]); // copy polarization to pvec for each refractive index
+			//cc// set the desired cc
 			if (yzplane) CalcEplaneYZ(which,type);     // generally plane of incPolY and prop
 			if (scat_plane) CalcScatPlane(which,type); // the scattering plane through ez,prop,incPolX - xz by default
 			// Calculate the scattered field for the whole solid-angle
@@ -905,6 +912,9 @@ int CalculateE(const enum incpol which,const enum Eftype type)
 			// Calculate the scattered field on the given grid of angles
 			if (scat_grid) CalcScatGrid(which);
 			// Calculate integral scattering quantities (cross sections, asymmetry parameter, electric forces)
+			cc=ccArr[i];
+			cc_sqrt=cc_sqrtArr[i];
+			chi_inv=chi_invArr[i];
 			if (calc_Cext || calc_Cabs || calc_Csca || calc_asym || calc_mat_force) CalcIntegralScatQuantities(which);
 			// saves internal fields and/or dipole polarizations to text file
 			if (store_int_field) {

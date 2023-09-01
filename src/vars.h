@@ -57,9 +57,15 @@ extern int term_width;
 
 // refractive index
 extern int Nmat,Ncomp;
-extern doublecomplex ref_index[MAX_NMAT];
-extern doublecomplex cc_sqrt[MAX_NMAT][3];
-extern doublecomplex chi_inv[MAX_NMAT][3];
+//extern doublecomplex ref_index[MAX_NMAT];
+extern doublecomplex *ref_index;
+extern doublecomplex ref_indexArr[MAX_NMAT][MAX_NMAT];
+//extern doublecomplex cc_sqrt[MAX_NMAT][3];
+extern doublecomplex (*cc_sqrt)[3];
+extern doublecomplex cc_sqrtArr[MAX_NMAT][MAX_NMAT][3];
+//extern doublecomplex chi_inv[MAX_NMAT][3];
+extern doublecomplex (*chi_inv)[3];
+extern doublecomplex chi_invArr[MAX_NMAT][MAX_NMAT][3];
 extern unsigned char * restrict material;
 
 // iterative solver

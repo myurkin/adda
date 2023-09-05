@@ -791,8 +791,6 @@ static void AllocateEverything(void)
 			MALLOC_VECTOR(lArray,complex,num_used_n,ALL);
 			MALLOC_VECTOR(dArray,complex,num_used_n,ALL);
 			MALLOC_VECTOR(sigmaArray,complex,num_used_n,ALL);
-			for(size_t i=0;i<num_used_n;i++)
-				sigmaArray[i]=(4*PI/3)*(ref_index[i]*ref_index[i]+2)/(ref_index[i]*ref_index[i]-1);
 			MALLOC_VECTOR(uArray,complex,num_used_n,ALL);
 			pArray=malloc_func(local_nRows,num_used_n);
 			xArray=malloc_func(local_nRows,num_used_n);

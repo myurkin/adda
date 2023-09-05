@@ -1260,6 +1260,7 @@ ITER_FUNC(Shifted_CG)
 	static doublecomplex beta_pr=0;
 	static doublecomplex beta_cur=0;
 	static doublecomplex res=0;
+	//FILE *fp8, *fp9;
 
 	// The function accepts a single argument 'ph' describing a current phase to execute
 	switch (ph) {
@@ -1303,6 +1304,11 @@ ITER_FUNC(Shifted_CG)
 		// norm of vcur
 		vnorm=nNorm2(vcur,&Timing_OneIterComm);
 		vnorm=csqrt(vnorm);
+		for(size_t i=0;i<num_used_n;i++){
+			ref_index=ref_indexArr[i];
+			sigmaArray[i]=(4*PI/3)*(ref_index[0]*ref_index[0]+2)/(ref_index[0]*ref_index[0]-1);
+		}
+
 
 		// CG iterates for all shifted systems
 		for(size_t i=0;i<num_used_n;i++) {
@@ -1316,6 +1322,15 @@ ITER_FUNC(Shifted_CG)
 			nIncrem011_cmplx(xArray[i],pArray[i],vzeros,uArray[i]/dArray[i],1);
 			//current residual
 			res=vnorm*cabs(uArray[i]); // without normalization
+			/*if ((fp8 = fopen("p (ADDA).txt", "w")) == NULL) printf("File is not open");
+			for(size_t j=0;j<local_nRows;j++)
+				fprintf(fp8,"%.30f + %.30f*I,\n", creal(pArray[i][j]), cimag(pArray[i][j]));
+			fclose(fp8);
+
+			if ((fp9 = fopen("x (ADDA).txt", "w")) == NULL) printf("File is not open");
+			for(size_t j=0;j<local_nRows;j++)
+				fprintf(fp9,"%.30f + %.30f*I,\n", creal(xArray[i][j]), cimag(xArray[i][j]));
+			fclose(fp9);*/
 		}
 		inprodRp1=conj(res)*res; // outputs are only for the highest refractive index
 		// vpr=vcur, vcur=vnext, beta_pr=beta_cur
@@ -1604,8 +1619,8 @@ int IterativeSolver(const enum iter method_in,const enum incpol which)
 	tstart=GET_TIME();
 	matvec_ready=false; // can be set to true only in CalcInitField (if !load_chpoint)
 	if (!load_chpoint) {
-		if (IterMethod!=IT_SHIFTED_CG) nMult_mat(pvec,Einc,cc_sqrt);
-		else nCopy(pvec,Einc);
+		if (IterMethod==IT_SHIFTED_CG) nCopy(pvec,Einc);
+		else nMult_mat(pvec,Einc,cc_sqrt);
 		temp=nNorm2(pvec,&Timing_InitIterComm); // |r_0|^2 when x_0=0
 		resid_scale=1/temp;
 		epsB=iter_eps*iter_eps*temp;
@@ -1699,7 +1714,7 @@ int IterativeSolver(const enum iter method_in,const enum incpol which)
 			"number of iterations (%d)",params[ind_m].mc);
 	}
 	if (IterMethod==IT_SHIFTED_CG){
-		nCopy(xvec,xArray[num_used_n-1]);
+		nCopy(xvec,xArray[0]);
 		// TODO: If we use recalc_resid then we have to calculate rvec here,
 		// and explicitly multiply a matrix by a vector (A.x), because in the SCG, res is a number.
 	}
@@ -1719,9 +1734,12 @@ int IterativeSolver(const enum iter method_in,const enum incpol which)
 	/* x is a solution of a modified system, not exactly internal field; should not be used further except for adaptive
 	 * technique (as starting vector for next system)
 	 */
-	if (IterMethod!=IT_SHIFTED_CG)
-		nMult_mat(pvec,xvec,cc_sqrt); // p now contains polarizations. Can be used to calculate e.g. scattered field faster.
-	else nCopy(pvec,xvec);
+	/*FILE *fp2;
+	if ((fp2 = fopen("xvec after iter alg (ADDA).txt", "w")) == NULL) printf("File is not open");
+	for(size_t i=0;i<local_nRows;i++) fprintf(fp2,"%.30f + %.30f*I,\n", creal(xvec[i]), cimag(xvec[i]));
+	fclose(fp2);*/
+	if (IterMethod==IT_SHIFTED_CG) nCopy(pvec,xArray[0]);
+	else nMult_mat(pvec,xvec,cc_sqrt); // p now contains polarizations. Can be used to calculate e.g. scattered field faster.
 	if (chp_exit) return CHP_EXIT; // check if exiting after checkpoint
 	return (niter-1); // the number of iterations elapsed
 }

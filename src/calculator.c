@@ -970,10 +970,10 @@ void FreeEverything(void)
 		case IT_SHIFTED_CG:
 			free(rvecArray);
 			free(v_cur);
-			free(lArray);
-			free(dArray);
-			free(sigmaArray);
-			free(uArray);
+			Free_cVector(lArray);
+			Free_cVector(dArray);
+			Free_cVector(sigmaArray);
+			Free_cVector(uArray);
 			free(pArray);
 			free(xArray);
 	}

@@ -113,7 +113,7 @@ doublecomplex *uArray;
 doublecomplex **pArray;
 doublecomplex **xArray;
 doublecomplex *v_cur;
-size_t num_used_n; // number of used refractive indexes
+int num_used_n; // number of used refractive indexes
 
 #else // These variables are exclusive to the sparse mode
 

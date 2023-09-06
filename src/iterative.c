@@ -1264,7 +1264,7 @@ ITER_FUNC(Shifted_CG)
 	static doublecomplex res=0;
 	static int loop_first=0;
 	static double inprodR_tmp;
-	//FILE *fp8, *fp9;
+	static int i=0;
 
 	// The function accepts a single argument 'ph' describing a current phase to execute
 	switch (ph) {
@@ -1281,7 +1281,7 @@ ITER_FUNC(Shifted_CG)
 		// v0=0
 		nInit(vpr);
 		nInit(vtmp);
-		for(size_t i=0;i<num_used_n;i++){
+		for(i=0;i<num_used_n;i++){
 			lArray[i]=0;
 			uArray[i]=0;
 			nInit(xArray[i]);
@@ -1308,7 +1308,7 @@ ITER_FUNC(Shifted_CG)
 		vnorm=nNorm2(vcur,&Timing_OneIterComm);
 		vnorm=csqrt(vnorm);
 		// CG iterates for all shifted systems
-		for(size_t i=loop_first;i<num_used_n;i++) {
+		for(i=loop_first;i<num_used_n;i++) {
 			if(niter!=1) lArray[i]=beta_pr/dArray[i];
 			dArray[i]=alfa1+sigmaArray[i]-beta_pr*lArray[i];
 			if(niter==1) uArray[i]=beta_pr-lArray[i]*uArray[i];

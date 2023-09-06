@@ -895,7 +895,7 @@ int CalculateE(const enum incpol which,const enum Eftype type)
 	} else {
 		char directoryOld[MAX_DIRNAME]="";
 		strcpy(directoryOld, directory); // copy old directory
-		for(size_t i=0;i<num_used_n;i++) {
+		for(int i=0;i<num_used_n;i++) {
 			static char dir_m[10]="";
 			ref_index=ref_indexArr[i];
 			sprintf (dir_m, "/m%.10g %.10g", creal(ref_index[0]), cimag(ref_index[0]));

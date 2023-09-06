@@ -637,7 +637,7 @@ static void calculate_one_orientation(double * restrict res)
 		InitCC(INCPOL_Y);
 	}
 	else {
-		for(size_t i=0;i<num_used_n;i++) {
+		for(int i=0;i<num_used_n;i++) {
 			cc=ccArr[i];
 			cc_sqrt=cc_sqrtArr[i];
 			chi_inv=chi_invArr[i];
@@ -673,7 +673,7 @@ static void calculate_one_orientation(double * restrict res)
 	else {
 		char directoryOld[MAX_DIRNAME]="";
 		strcpy(directoryOld, directory); // copy old directory
-		for(size_t i=0;i<num_used_n;i++){
+		for(int i=0;i<num_used_n;i++){
 			directory=directoriesNew[i];
 			MuellerMatrix();
 		}
@@ -786,7 +786,7 @@ static void AllocateEverything(void)
 			break;
 		case IT_SHIFTED_CG:
 			rvecArray=malloc_func(local_nRows,num_used_n);
-			v_cur=malloc_func(local_nRows,1);
+			MALLOC_VECTOR(v_cur,complex,local_nRows,ALL);
 			MALLOC_VECTOR(lArray,complex,num_used_n,ALL);
 			MALLOC_VECTOR(dArray,complex,num_used_n,ALL);
 			MALLOC_VECTOR(sigmaArray,complex,num_used_n,ALL);
@@ -967,7 +967,7 @@ void FreeEverything(void)
 			break;
 		case IT_SHIFTED_CG:
 			free(rvecArray);
-			free(v_cur);
+			Free_cVector(v_cur);
 			Free_cVector(lArray);
 			Free_cVector(dArray);
 			Free_cVector(sigmaArray);

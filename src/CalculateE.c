@@ -904,7 +904,6 @@ int CalculateE(const enum incpol which,const enum Eftype type)
 			MkDirErr(directoriesNew[i],ONE_POS);
 			directory=directoriesNew[i]; // change the folder
 			nCopy(pvec,xArray[i]); // copy polarization to pvec for each refractive index
-			//cc// set the desired cc
 			if (yzplane) CalcEplaneYZ(which,type);     // generally plane of incPolY and prop
 			if (scat_plane) CalcScatPlane(which,type); // the scattering plane through ez,prop,incPolX - xz by default
 			// Calculate the scattered field for the whole solid-angle

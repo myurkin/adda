@@ -2394,7 +2394,11 @@ void DirectoryLog(const int argc,char **argv)
 		 * relevant buffers (for filenames or messages).
 		 */
 		static char sbuffer[MAX_LINE];
-		sprintf(sbuffer,"%s%03i_%s_g%i_m"GFORM_RI_DIRNAME,run_name,Nexp,shapename,boxX,creal(ref_index[0]));
+		if(IterMethod!=IT_SHIFTED_CG)
+			sprintf(sbuffer,"%s%03i_%s_g%i_m"GFORM_RI_DIRNAME,run_name,Nexp,shapename,boxX,creal(ref_index[0]));
+		else
+			sprintf(sbuffer,"%s%03i_%s_g%i_m"GFORM_RI_DIRNAME"-"GFORM_RI_DIRNAME,run_name,Nexp,shapename,boxX,
+					creal(ref_indexArr[0][0]),creal(ref_indexArr[num_used_n-1][0]));
 #ifdef PARALLEL
 		// add PBS, SGE or SLURM job id to the directory name if available
 		if ((ptmp=getenv("PBS_JOBID"))!=NULL || (ptmp=getenv("JOB_ID"))!=NULL || (ptmp=getenv("SLURM_JOBID"))!=NULL) {

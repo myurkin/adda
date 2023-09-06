@@ -1286,11 +1286,10 @@ ITER_FUNC(Shifted_CG)
 			lArray[i]=0;
 			uArray[i]=0;
 			nInit(xArray[i]);
+			ref_index=ref_indexArr[i];
+			cc=ccArr[i];
+			sigmaArray[i]=1/cc[0][0]; // perhaps sigma is already calculated somewhere earlier in ADDA
 		}
-		// Calculate norm of b
-		//norm=nNorm2(rvec,&Timing_OneIterComm);
-		//norm=csqrt(norm);
-
 	  return;
 	case PHASE_ITER:
 		// Lanczos Process
@@ -1308,11 +1307,6 @@ ITER_FUNC(Shifted_CG)
 		// norm of vcur
 		vnorm=nNorm2(vcur,&Timing_OneIterComm);
 		vnorm=csqrt(vnorm);
-		for(size_t i=0;i<num_used_n;i++){
-			ref_index=ref_indexArr[i];
-			cc=ccArr[i];
-			sigmaArray[i]=1/cc[0][0]; // perhaps sigma is already calculated somewhere earlier in ADDA
-		}
 		// CG iterates for all shifted systems
 		for(size_t i=loop_first;i<num_used_n;i++) {
 			if(niter!=1) lArray[i]=beta_pr/dArray[i];

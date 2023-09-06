@@ -63,6 +63,8 @@ extern time_t last_chp_wt;
 extern TIME_TYPE Timing_OneIter,Timing_OneIterComm,Timing_InitIter,Timing_InitIterComm,Timing_IntFieldOneComm,
 	Timing_MVP,Timing_MVPComm,Timing_OneIterMVP,Timing_OneIterMVPComm;
 extern size_t TotalIter;
+extern doublecomplex ccArr[MAX_NMAT][MAX_NMAT][3];
+extern doublecomplex (*cc)[3];
 
 // LOCAL VARIABLES
 
@@ -1260,6 +1262,8 @@ ITER_FUNC(Shifted_CG)
 	static doublecomplex beta_pr=0;
 	static doublecomplex beta_cur=0;
 	static doublecomplex res=0;
+	static int loop_first=0;
+	static double inprodR_tmp;
 	//FILE *fp8, *fp9;
 
 	// The function accepts a single argument 'ph' describing a current phase to execute
@@ -1306,12 +1310,11 @@ ITER_FUNC(Shifted_CG)
 		vnorm=csqrt(vnorm);
 		for(size_t i=0;i<num_used_n;i++){
 			ref_index=ref_indexArr[i];
-			sigmaArray[i]=(4*PI/3)*(ref_index[0]*ref_index[0]+2)/(ref_index[0]*ref_index[0]-1);
+			cc=ccArr[i];
+			sigmaArray[i]=1/cc[0][0]; // perhaps sigma is already calculated somewhere earlier in ADDA
 		}
-
-
 		// CG iterates for all shifted systems
-		for(size_t i=0;i<num_used_n;i++) {
+		for(size_t i=loop_first;i<num_used_n;i++) {
 			if(niter!=1) lArray[i]=beta_pr/dArray[i];
 			dArray[i]=alfa1+sigmaArray[i]-beta_pr*lArray[i];
 			if(niter==1) uArray[i]=beta_pr-lArray[i]*uArray[i];
@@ -1322,15 +1325,15 @@ ITER_FUNC(Shifted_CG)
 			nIncrem011_cmplx(xArray[i],pArray[i],vzeros,uArray[i]/dArray[i],1);
 			//current residual
 			res=vnorm*cabs(uArray[i]); // without normalization
-			/*if ((fp8 = fopen("p (ADDA).txt", "w")) == NULL) printf("File is not open");
-			for(size_t j=0;j<local_nRows;j++)
-				fprintf(fp8,"%.30f + %.30f*I,\n", creal(pArray[i][j]), cimag(pArray[i][j]));
-			fclose(fp8);
-
-			if ((fp9 = fopen("x (ADDA).txt", "w")) == NULL) printf("File is not open");
-			for(size_t j=0;j<local_nRows;j++)
-				fprintf(fp9,"%.30f + %.30f*I,\n", creal(xArray[i][j]), cimag(xArray[i][j]));
-			fclose(fp9);*/
+			//TODO: If the algorithm converged (i case), then we no longer calculate.
+			// Here I assume that the refractive indices are sorted from smallest to largest.
+			// Accordingly, the former converge earlier than the latter.
+			// Perhaps it is worth redoing this loop with a loop over the list of indices,
+			// while the list will decrease as the particles converge.
+			if(i==loop_first && i!=num_used_n-1) {
+				inprodR_tmp=conj(res)*res;
+				if(inprodR_tmp<=epsB) loop_first++;
+			}
 		}
 		inprodRp1=conj(res)*res; // outputs are only for the highest refractive index
 		// vpr=vcur, vcur=vnext, beta_pr=beta_cur

@@ -740,7 +740,6 @@ static void AllocateEverything(void)
 		MALLOC_VECTOR(vcur,complex,local_nRows,ALL);
 		MALLOC_VECTOR(vpr,complex,local_nRows,ALL);
 		MALLOC_VECTOR(vtmp,complex,local_nRows,ALL);
-		MALLOC_VECTOR(vzeros,complex,local_nRows,ALL);
 		MALLOC_VECTOR(vnext,complex,local_nRows,ALL);
 	}
 	memory+=5*tmp;
@@ -939,7 +938,6 @@ void FreeEverything(void)
 	Free_cVector(vcur);
 	Free_cVector(vpr);
 	Free_cVector(vtmp);
-	Free_cVector(vzeros);
 	Free_cVector(vnext);
 	
 	/* The following can be automated to some extent, either using the information from structure array 'params' in

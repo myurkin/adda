@@ -44,7 +44,7 @@
 
 // defined and initialized in calculator.c
 extern doublecomplex *rvec; // can't be declared restrict due to SwapPointers
-extern doublecomplex *vcur, *vpr, *vtmp, *vzeros, *vnext;
+extern doublecomplex *vcur, *vpr, *vtmp, *vnext;
 extern doublecomplex * restrict vec1,* restrict vec2,* restrict vec3,* restrict vec4,* restrict Avecbuffer;
 // defined and initialized in fft.c
 #if !defined(OPENCL) && !defined(SPARSE)
@@ -1280,7 +1280,6 @@ ITER_FUNC(Shifted_CG)
 		beta_pr=pn;
 		// v0=0
 		nInit(vpr);
-		nInit(vzeros);
 		nInit(vtmp);
 		for(size_t i=0;i<num_used_n;i++){
 			lArray[i]=0;
@@ -1299,7 +1298,8 @@ ITER_FUNC(Shifted_CG)
 		// v=v-alfa1*vcur+A.vcur
 		nIncrem110_cmplx(vtmp, vcur, Avecbuffer, 0, -alfa1);
 		// v=v-beta0*vprev
-		nIncrem110_cmplx(vtmp, vpr, vzeros, 1, -beta_pr);
+		//nIncrem110_cmplx(vtmp, vpr, vzeros, 1, -beta_pr);
+		nIncrem01_cmplx(vtmp,vpr,-beta_pr,NULL,&Timing_OneIterComm);
 		// beta_cur=|vtmp|ps
 		beta_cur=nDotProdSelf_conj(vtmp,&Timing_OneIterComm);
 		beta_cur=csqrt(beta_cur); // complex square root
@@ -1314,9 +1314,9 @@ ITER_FUNC(Shifted_CG)
 			if(niter==1) uArray[i]=beta_pr-lArray[i]*uArray[i];
 			else uArray[i]=-lArray[i]*uArray[i];
 			// pArray[i]=vcur-lArray[i]*pArray[i]
-			nIncrem110_cmplx(pArray[i],vzeros,vcur,-lArray[i],1);
+			nIncrem10_cmplx(pArray[i],vcur,-lArray[i],NULL,&Timing_OneIterComm);
 			// xArray[i]=xArray[i]+u[i]/d[i]*p[i]
-			nIncrem011_cmplx(xArray[i],pArray[i],vzeros,uArray[i]/dArray[i],1);
+			nIncrem01_cmplx(xArray[i],pArray[i],uArray[i]/dArray[i],NULL,&Timing_OneIterComm);
 			//current residual
 			res=vnorm*cabs(uArray[i]); // without normalization
 			//TODO: If the algorithm converged (i case), then we no longer calculate.

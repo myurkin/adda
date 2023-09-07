@@ -51,7 +51,7 @@ extern double prop_0[3],prop[3],incPolX[3],incPolY[3],beam_center_0[3],beam_cent
 
 // file info
 extern const char * restrict directory;
-extern char directoriesNew[MAX_NMAT][MAX_DIRNAME];
+extern char directoriesNew[MAX_N_SCG][MAX_DIRNAME];
 extern FILE * restrict logfile;
 extern int term_width;
 
@@ -59,13 +59,13 @@ extern int term_width;
 extern int Nmat,Ncomp;
 //extern doublecomplex ref_index[MAX_NMAT];
 extern doublecomplex *ref_index;
-extern doublecomplex ref_indexArr[MAX_NMAT][MAX_NMAT];
+extern doublecomplex ref_indexArr[MAX_N_SCG][MAX_NMAT];
 //extern doublecomplex cc_sqrt[MAX_NMAT][3];
 extern doublecomplex (*cc_sqrt)[3];
-extern doublecomplex cc_sqrtArr[MAX_NMAT][MAX_NMAT][3];
+extern doublecomplex cc_sqrtArr[MAX_N_SCG][MAX_NMAT][3];
 //extern doublecomplex chi_inv[MAX_NMAT][3];
 extern doublecomplex (*chi_inv)[3];
-extern doublecomplex chi_invArr[MAX_NMAT][MAX_NMAT][3];
+extern doublecomplex chi_invArr[MAX_N_SCG][MAX_NMAT][3];
 extern unsigned char * restrict material;
 
 // iterative solver

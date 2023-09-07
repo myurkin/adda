@@ -53,11 +53,11 @@ extern const int phi_int_type;
 extern TIME_TYPE Timing_EPlane,Timing_EPlaneComm,Timing_IntField,Timing_IntFieldOne,Timing_ScatQuan,Timing_IncBeam;
 extern size_t TotalEFieldPlane;
 extern doublecomplex (*cc)[3]; // a pointer to array of 3 doubles
-extern doublecomplex ccArr[MAX_NMAT][MAX_NMAT][3]; // couple constants
+extern doublecomplex ccArr[MAX_N_SCG][MAX_NMAT][3]; // couple constants
 extern doublecomplex (*cc_sqrt)[3];
-extern doublecomplex cc_sqrtArr[MAX_NMAT][MAX_NMAT][3];
+extern doublecomplex cc_sqrtArr[MAX_N_SCG][MAX_NMAT][3];
 extern doublecomplex (*chi_inv)[3];
-extern doublecomplex chi_invArr[MAX_NMAT][MAX_NMAT][3];
+extern doublecomplex chi_invArr[MAX_N_SCG][MAX_NMAT][3];
 
 // LOCAL VARIABLES
 

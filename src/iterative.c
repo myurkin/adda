@@ -1256,7 +1256,6 @@ ITER_FUNC(Shifted_CG)
 #define EPS1 1E-30
 	// all internal variables should be defined here as static, since the function will be called many times
 	static doublecomplex pn=0; // pseudo norm
-	//static doublecomplex norm=0;
 	static doublecomplex vnorm=0;
 	static doublecomplex alfa1=0;
 	static doublecomplex beta_pr=0;
@@ -1280,8 +1279,7 @@ ITER_FUNC(Shifted_CG)
 		beta_pr=pn;
 		// v0=0
 		nInit(vpr);
-		nInit(vtmp);
-		for(i=0;i<num_used_n;i++){
+		for(i=0;i<num_used_n;i++) {
 			lArray[i]=0;
 			uArray[i]=0;
 			nInit(xArray[i]);
@@ -1292,17 +1290,17 @@ ITER_FUNC(Shifted_CG)
 	  return;
 	case PHASE_ITER:
 		// Lanczos Process
+		// A.v
 		MatVecRaw(vcur,Avecbuffer,NULL,false,&Timing_OneIterMVP,&Timing_OneIterMVPComm);
 		// alfa1
 		alfa1=nDotProd_conj(vcur, Avecbuffer, &Timing_OneIterComm);
-		// v=v-alfa1*vcur+A.vcur
-		nIncrem110_cmplx(vtmp, vcur, Avecbuffer, 0, -alfa1);
-		// v=v-beta0*vprev
-		//nIncrem110_cmplx(vtmp, vpr, vzeros, 1, -beta_pr);
+		// vtmp=-alfa1*vcur+A.vcur
+		nLinComb_cmplx(vtmp,vcur,Avecbuffer,-alfa1,1,NULL,&Timing_OneIterComm);
+		// vtmp=vtmp-beta0*vprev
 		nIncrem01_cmplx(vtmp,vpr,-beta_pr,NULL,&Timing_OneIterComm);
 		// beta_cur=|vtmp|ps
 		beta_cur=nDotProdSelf_conj(vtmp,&Timing_OneIterComm);
-		beta_cur=csqrt(beta_cur); // complex square root
+		beta_cur=csqrt(beta_cur);
 		nMult_cmplx(vnext, vtmp, 1/beta_cur);
 		// norm of vcur
 		vnorm=nNorm2(vcur,&Timing_OneIterComm);
@@ -1319,7 +1317,7 @@ ITER_FUNC(Shifted_CG)
 			nIncrem01_cmplx(xArray[i],pArray[i],uArray[i]/dArray[i],NULL,&Timing_OneIterComm);
 			//current residual
 			res=vnorm*cabs(uArray[i]); // without normalization
-			//TODO: If the algorithm converged (i case), then we no longer calculate.
+			//TODO: If the algorithm converged (i-case), then we no longer calculate.
 			// Here I assume that the refractive indices are sorted from smallest to largest.
 			// Accordingly, the former converge earlier than the latter.
 			// Perhaps it is worth redoing this loop with a loop over the list of indices,

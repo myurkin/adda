@@ -84,12 +84,6 @@ static bool complete;      // complete iteration was performed (not stopped in t
 	// whether matrix-vector product computed during initialization can be reused at first iteration
 static bool matvec_ready;
 
-typedef struct Node {
-    int index;
-    struct Node *next;
-} Node;
-Node *head = NULL;
-
 typedef struct // data for checkpoints
 {
 	void *ptr; // pointer to the data
@@ -1255,123 +1249,6 @@ ITER_FUNC(QMR_CS_2)
 #undef EPS2
 
 //======================================================================================================================
-// it inserts new data at the beginning of the list
-/*void push(Node *head_, int data) {
-    Node *tmp = (Node*) malloc(sizeof(Node));
-    tmp->index = data;
-    tmp->next = head_;
-    head_ = tmp;
-}
-
-// it removes the element pointed to by head and returns its value
-int pop(Node **head) {
-    Node* prev = NULL;
-    int val;
-    if (head == NULL) {
-        exit(-1);
-    }
-    prev = (*head);
-    val = prev->index;
-    (*head) = (*head)->next;
-    free(prev);
-    return val;
-}
-
-Node* getNth(Node* head, int n) {
-    int counter = 0;
-    while (counter < n && head) {
-        head = head->next;
-        counter++;
-    }
-    return head;
-}
-
-Node* getLast(Node *head) {
-    if (head == NULL) {
-        return NULL;
-    }
-    while (head->next) {
-        head = head->next;
-    }
-    return head;
-}
-
-// it adds a new element to the end of the list
-void pushBack(Node *head, int index) {
-    Node *last = getLast(head);
-    Node *tmp = (Node*) malloc(sizeof(Node));
-    tmp->index = index;
-    tmp->next = NULL;
-    last->next = tmp;
-}
-
-// it returns a pointer to the penultimate element
-Node* getLastButOne(Node* head) {
-    if (head == NULL) {
-        exit(-2);
-    }
-    if (head->next == NULL) {
-        return NULL;
-    }
-    while (head->next->next) {
-        head = head->next;
-    }
-    return head;
-}
-
-// it removes an element from the end of the list
-void popBack(Node **head) {
-    Node *lastbn = NULL;
-    if (!head) {
-        exit(-1);
-    }
-    if (!(*head)) {
-        exit(-1);
-    }
-    lastbn = getLastButOne(*head);
-    if (lastbn == NULL) {
-        free(*head);
-        *head = NULL;
-    } else {
-        free(lastbn->next);
-        lastbn->next = NULL;
-    }
-}
-
-int deleteNth(Node **head, int n) {
-    if (n == 0) {
-        return pop(head);
-    } else {
-        Node *prev = getNth(*head, n-1);
-        Node *elm  = prev->next;
-        int val = elm->index;
-
-        prev->next = elm->next;
-        free(elm);
-        return val;
-    }
-}
-
-void deleteList(Node **head) {
-    Node* prev = NULL;
-    while ((*head)->next) {
-        prev = (*head);
-        (*head) = (*head)->next;
-        free(prev);
-    }
-    free(*head);
-}
-
-
-void printLinkedList(const Node *head) {
-    while (head) {
-        printf("%d ", head->index);
-        head = head->next;
-    }
-    printf("\n");
-}
-*/
-
 ITER_FUNC(Shifted_CG)
 // Short comment, providing full name of the iterative solver
 {
@@ -1409,13 +1286,6 @@ ITER_FUNC(Shifted_CG)
 			cc=ccArr[i];
 			sigmaArray[i]=1/cc[0][0]; // perhaps sigma is already calculated somewhere earlier in ADDA
 		}
-		// singly linked list that stores indexes
-		/*push(head,0);
-		for(i=1;i<num_used_n;i++){
-			pushBack(head,i);
-		}
-		printLinkedList(head);*/
-
 	  return;
 	case PHASE_ITER:
 		// Lanczos Process

@@ -89,7 +89,7 @@ typedef struct Node {
     struct Node *next;
 } Node;
 Node *head = NULL;
-Node *head_copy=NULL;
+
 typedef struct // data for checkpoints
 {
 	void *ptr; // pointer to the data
@@ -1256,24 +1256,25 @@ ITER_FUNC(QMR_CS_2)
 
 //======================================================================================================================
 // it inserts new data at the beginning of the list
-void push(Node *head_, int data) {
+/*void push(Node *head_, int data) {
     Node *tmp = (Node*) malloc(sizeof(Node));
     tmp->index = data;
     tmp->next = head_;
     head_ = tmp;
 }
 
-// it removes the element pointed to by head and returns pointer on next element
-Node* pop(Node **head) {
+// it removes the element pointed to by head and returns its value
+int pop(Node **head) {
     Node* prev = NULL;
+    int val;
     if (head == NULL) {
         exit(-1);
     }
     prev = (*head);
+    val = prev->index;
     (*head) = (*head)->next;
     free(prev);
-    prev=NULL;
-    return (*head);
+    return val;
 }
 
 Node* getNth(Node* head, int n) {
@@ -1286,6 +1287,9 @@ Node* getNth(Node* head, int n) {
 }
 
 Node* getLast(Node *head) {
+    if (head == NULL) {
+        return NULL;
+    }
     while (head->next) {
         head = head->next;
     }
@@ -1299,6 +1303,39 @@ void pushBack(Node *head, int index) {
     tmp->index = index;
     tmp->next = NULL;
     last->next = tmp;
+}
+
+// it returns a pointer to the penultimate element
+Node* getLastButOne(Node* head) {
+    if (head == NULL) {
+        exit(-2);
+    }
+    if (head->next == NULL) {
+        return NULL;
+    }
+    while (head->next->next) {
+        head = head->next;
+    }
+    return head;
+}
+
+// it removes an element from the end of the list
+void popBack(Node **head) {
+    Node *lastbn = NULL;
+    if (!head) {
+        exit(-1);
+    }
+    if (!(*head)) {
+        exit(-1);
+    }
+    lastbn = getLastButOne(*head);
+    if (lastbn == NULL) {
+        free(*head);
+        *head = NULL;
+    } else {
+        free(lastbn->next);
+        lastbn->next = NULL;
+    }
 }
 
 int deleteNth(Node **head, int n) {
@@ -1333,7 +1370,7 @@ void printLinkedList(const Node *head) {
     }
     printf("\n");
 }
-
+*/
 
 ITER_FUNC(Shifted_CG)
 // Short comment, providing full name of the iterative solver
@@ -1347,8 +1384,7 @@ ITER_FUNC(Shifted_CG)
 	static doublecomplex beta_pr=0;
 	static doublecomplex beta_cur=0;
 	static doublecomplex res=0;
-	//static int loop_first=0;
-	static double inprodR_max;
+	static int loop_first=0;
 	static double inprodR_tmp;
 	static int i=0;
 
@@ -1373,22 +1409,12 @@ ITER_FUNC(Shifted_CG)
 			cc=ccArr[i];
 			sigmaArray[i]=1/cc[0][0]; // perhaps sigma is already calculated somewhere earlier in ADDA
 		}
-		// create singly linked list that stores indexes
-		head = (Node*)malloc(sizeof(Node));
-		head->index=0;
-		head->next=NULL;
+		// singly linked list that stores indexes
+		/*push(head,0);
 		for(i=1;i<num_used_n;i++){
 			pushBack(head,i);
 		}
-		/*printLinkedList(head);
-		i=1;
-		deleteNth(&head,i);
-		printLinkedList(head);
-		i=0;
-		deleteNth(&head,i);
-		printLinkedList(head);
-		free(head);
-		head=NULL;*/
+		printLinkedList(head);*/
 
 	  return;
 	case PHASE_ITER:
@@ -1409,34 +1435,7 @@ ITER_FUNC(Shifted_CG)
 		vnorm=nNorm2(vcur,&Timing_OneIterComm);
 		vnorm=csqrt(vnorm);
 		// CG iterates for all shifted systems
-		// printLinkedList(head);
-		i=0;
-		inprodR_max=0;
-		head_copy=head;
-		while(head_copy!=NULL){
-			i=head_copy->index;
-			// calculations
-			if(niter!=1) lArray[i]=beta_pr/dArray[i];
-			dArray[i]=alfa1+sigmaArray[i]-beta_pr*lArray[i];
-			if(niter==1) uArray[i]=beta_pr-lArray[i]*uArray[i];
-			else uArray[i]=-lArray[i]*uArray[i];
-			// pArray[i]=vcur-lArray[i]*pArray[i]
-			nIncrem10_cmplx(pArray[i],vcur,-lArray[i],NULL,&Timing_OneIterComm);
-			// xArray[i]=xArray[i]+u[i]/d[i]*p[i]
-			nIncrem01_cmplx(xArray[i],pArray[i],uArray[i]/dArray[i],NULL,&Timing_OneIterComm);
-			//current residual
-			res=vnorm*cabs(uArray[i]); // without normalization
-			inprodR_tmp=conj(res)*res;
-			if(inprodR_max<inprodR_tmp) inprodR_max=inprodR_tmp;
-			if(inprodR_tmp<=epsB) {
-				if(head_copy==head) head_copy=pop(&head);
-				else head_copy=pop(&head_copy);
-			}
-			else head_copy=head_copy->next;
-		}
-		inprodRp1=inprodR_max;
-
-		/*for(i=loop_first;i<num_used_n;i++) {
+		for(i=loop_first;i<num_used_n;i++) {
 			if(niter!=1) lArray[i]=beta_pr/dArray[i];
 			dArray[i]=alfa1+sigmaArray[i]-beta_pr*lArray[i];
 			if(niter==1) uArray[i]=beta_pr-lArray[i]*uArray[i];
@@ -1456,8 +1455,8 @@ ITER_FUNC(Shifted_CG)
 				inprodR_tmp=conj(res)*res;
 				if(inprodR_tmp<=epsB) loop_first++;
 			}
-		}*/
-		//inprodRp1=conj(res)*res; // outputs are only for the highest refractive index
+		}
+		inprodRp1=conj(res)*res; // outputs are only for the highest refractive index
 		// vpr=vcur, vcur=vnext, beta_pr=beta_cur
 		nCopy(vpr,vcur);
 		nCopy(vcur,vnext);

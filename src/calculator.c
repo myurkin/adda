@@ -718,7 +718,7 @@ doublecomplex ** malloc_func(const size_t rows, const size_t columns)
 static void AllocateEverything(void)
 // allocates a lot of arrays and performs memory analysis
 {
-	double tmp;
+	double tmp, tmp2, tmp3;
 	size_t temp_int;
 	double memmax;
 
@@ -737,10 +737,6 @@ static void AllocateEverything(void)
 		MALLOC_VECTOR(pvec,complex,local_nRows,ALL);
 		MALLOC_VECTOR(Einc,complex,local_nRows,ALL);
 		MALLOC_VECTOR(Avecbuffer,complex,local_nRows,ALL);
-		MALLOC_VECTOR(vcur,complex,local_nRows,ALL);
-		MALLOC_VECTOR(vpr,complex,local_nRows,ALL);
-		MALLOC_VECTOR(vtmp,complex,local_nRows,ALL);
-		MALLOC_VECTOR(vnext,complex,local_nRows,ALL);
 	}
 	memory+=5*tmp;
 #ifdef SPARSE
@@ -785,14 +781,25 @@ static void AllocateEverything(void)
 			memory+=2*tmp;
 			break;
 		case IT_SHIFTED_CG:
-			rvecArray=malloc_func(local_nRows,num_used_n);
-			MALLOC_VECTOR(v_cur,complex,local_nRows,ALL);
+			tmp2=sizeof(doublecomplex)*(double)num_used_n;
+			tmp3=sizeof(doublecomplex)*(double)(local_nRows*num_used_n);
+
+			pArray=malloc_func(local_nRows,num_used_n);
+			xArray=malloc_func(local_nRows,num_used_n);
+			memory+=2*tmp3;
+
+			MALLOC_VECTOR(vcur,complex,local_nRows,ALL);
+			MALLOC_VECTOR(vpr,complex,local_nRows,ALL);
+			MALLOC_VECTOR(vtmp,complex,local_nRows,ALL);
+			MALLOC_VECTOR(vnext,complex,local_nRows,ALL);
+			memory+=4*tmp;
+
 			MALLOC_VECTOR(lArray,complex,num_used_n,ALL);
 			MALLOC_VECTOR(dArray,complex,num_used_n,ALL);
 			MALLOC_VECTOR(sigmaArray,complex,num_used_n,ALL);
 			MALLOC_VECTOR(uArray,complex,num_used_n,ALL);
-			pArray=malloc_func(local_nRows,num_used_n);
-			xArray=malloc_func(local_nRows,num_used_n);
+			memory+=4*tmp2;
+
 	}
 	/* TO ADD NEW ITERATIVE SOLVER
 	 * Add here a case corresponding to the new iterative solver. If the new iterative solver requires any extra vectors
@@ -935,10 +942,6 @@ void FreeEverything(void)
 	Free_cVector(pvec);
 	Free_cVector(Einc);
 	Free_cVector(Avecbuffer);
-	Free_cVector(vcur);
-	Free_cVector(vpr);
-	Free_cVector(vtmp);
-	Free_cVector(vnext);
 	
 	/* The following can be automated to some extent, either using the information from structure array 'params' in
 	 * iterative.c or checking each vector for being NULL. However, it will anyway require manual editing if additional
@@ -966,14 +969,18 @@ void FreeEverything(void)
 			Free_cVector(vec2);
 			break;
 		case IT_SHIFTED_CG:
-			free(rvecArray);
-			Free_cVector(v_cur);
+			free(pArray);
+			free(xArray);
+
 			Free_cVector(lArray);
 			Free_cVector(dArray);
 			Free_cVector(sigmaArray);
 			Free_cVector(uArray);
-			free(pArray);
-			free(xArray);
+
+			Free_cVector(vcur);
+			Free_cVector(vpr);
+			Free_cVector(vtmp);
+			Free_cVector(vnext);
 	}
 	/* TO ADD NEW ITERATIVE SOLVER
 	 * Add here a case corresponding to the new iterative solver. It should free the extra vectors that were allocated

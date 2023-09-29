@@ -1261,9 +1261,8 @@ ITER_FUNC(Shifted_CG)
 	static doublecomplex beta_pr=0;
 	static doublecomplex beta_cur=0;
 	static doublecomplex res=0;
-	static int loop_first=0;
-	static double inprodR_tmp;
 	static int i=0;
+	static double inprodRp1_max=0;
 
 	// The function accepts a single argument 'ph' describing a current phase to execute
 	switch (ph) {
@@ -1285,6 +1284,7 @@ ITER_FUNC(Shifted_CG)
 			ref_index=ref_indexArr[i];
 			cc=ccArr[i];
 			sigmaArray[i]=1/cc[0][0]; // perhaps sigma is already calculated somewhere earlier in ADDA
+			continue_flag[i]=true;
 		}
 	  return;
 	case PHASE_ITER:
@@ -1305,28 +1305,31 @@ ITER_FUNC(Shifted_CG)
 		vnorm=nNorm2(vcur,&Timing_OneIterComm);
 		vnorm=csqrt(vnorm);
 		// CG iterates for all shifted systems
-		for(i=loop_first;i<num_used_n;i++) {
-			if(niter!=1) lArray[i]=beta_pr/dArray[i];
-			dArray[i]=alfa1+sigmaArray[i]-beta_pr*lArray[i];
-			if(niter==1) uArray[i]=beta_pr-lArray[i]*uArray[i];
-			else uArray[i]=-lArray[i]*uArray[i];
-			// pArray[i]=vcur-lArray[i]*pArray[i]
-			nIncrem10_cmplx(pArray[i],vcur,-lArray[i],NULL,&Timing_OneIterComm);
-			// xArray[i]=xArray[i]+u[i]/d[i]*p[i]
-			nIncrem01_cmplx(xArray[i],pArray[i],uArray[i]/dArray[i],NULL,&Timing_OneIterComm);
-			//current residual
-			res=vnorm*cabs(uArray[i]); // without normalization
-			//TODO: If the algorithm converged (i-case), then we no longer calculate.
-			// Here I assume that the refractive indices are sorted from smallest to largest.
-			// Accordingly, the former converge earlier than the latter.
-			// Perhaps it is worth redoing this loop with a loop over the list of indices,
-			// while the list will decrease as the particles converge.
-			if(i==loop_first && i!=num_used_n-1) {
-				inprodR_tmp=conj(res)*res;
-				if(inprodR_tmp<=epsB) loop_first++;
+		inprodRp1_max=0;
+		for(i=0;i<num_used_n;i++) {
+			if(continue_flag[i]) {
+				if(niter!=1) lArray[i]=beta_pr/dArray[i];
+				dArray[i]=alfa1+sigmaArray[i]-beta_pr*lArray[i];
+				if(niter==1) uArray[i]=beta_pr-lArray[i]*uArray[i];
+				else uArray[i]=-lArray[i]*uArray[i];
+				// pArray[i]=vcur-lArray[i]*pArray[i]
+				nIncrem10_cmplx(pArray[i],vcur,-lArray[i],NULL,&Timing_OneIterComm);
+				// xArray[i]=xArray[i]+u[i]/d[i]*p[i]
+				nIncrem01_cmplx(xArray[i],pArray[i],uArray[i]/dArray[i],NULL,&Timing_OneIterComm);
+				//current residual
+				res=vnorm*cabs(uArray[i]); // without normalization
+				inprodRp1Array[i]=conj(res)*res;
+				if(inprodRp1Array[i]<=epsB) continue_flag[i]=false;
+				if(inprodRp1Array[i]>inprodRp1_max) inprodRp1_max=inprodRp1Array[i];
+				//if(i==2) inprodRp1_max=inprodRp1Array[i];
+				//TODO: If the algorithm converged (i-case), then we no longer calculate.
+				// Here I assume that the refractive indices are sorted from smallest to largest.
+				// Accordingly, the former converge earlier than the latter.
+				// Perhaps it is worth redoing this loop with a loop over the list of indices,
+				// while the list will decrease as the particles converge.
 			}
 		}
-		inprodRp1=conj(res)*res; // outputs are only for the highest refractive index
+		inprodRp1=inprodRp1_max; // outputs are only for the highest refractive index
 		// vpr=vcur, vcur=vnext, beta_pr=beta_cur
 		nCopy(vpr,vcur);
 		nCopy(vcur,vnext);

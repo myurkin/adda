@@ -800,6 +800,11 @@ static void AllocateEverything(void)
 			MALLOC_VECTOR(uArray,complex,num_used_n,ALL);
 			memory+=4*tmp2;
 
+			inprodRp1Array=malloc(num_used_n*sizeof(double));
+			memory+=sizeof(double)*(double)num_used_n;
+			continue_flag=malloc(num_used_n*sizeof(bool));
+			memory+=sizeof(bool)*(double)num_used_n;
+
 	}
 	/* TO ADD NEW ITERATIVE SOLVER
 	 * Add here a case corresponding to the new iterative solver. If the new iterative solver requires any extra vectors
@@ -971,6 +976,8 @@ void FreeEverything(void)
 		case IT_SHIFTED_CG:
 			free(pArray);
 			free(xArray);
+			free(inprodRp1Array);
+			free(continue_flag);
 
 			Free_cVector(lArray);
 			Free_cVector(dArray);

@@ -111,6 +111,8 @@ doublecomplex *sigmaArray;
 doublecomplex *uArray;
 doublecomplex **pArray;
 doublecomplex **xArray;
+double *inprodRp1Array;
+bool *continue_flag;
 int num_used_n; // number of used refractive indexes
 
 #else // These variables are exclusive to the sparse mode
